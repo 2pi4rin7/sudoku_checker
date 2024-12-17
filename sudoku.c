@@ -4,9 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
-
 #define SIZE 9
-
 //parameters for each subgrid.
 typedef struct 
 {
@@ -14,7 +12,6 @@ typedef struct
     int column;
     int (*sudoku)[SIZE];
 } parameters;
-
 //void* means it returns a pointer to void, which is a generic pointer type.
 void *check_subgrid(void *param)
 {
@@ -76,18 +73,23 @@ void *check_rows(void *param)
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {   
-    int sudoku[9][9] = {{6, 2, 4, 5, 3, 9, 1, 8, 7},
-                        {5, 1, 9, 7, 2, 8, 6, 3, 4},
-                        {8, 3, 7, 6, 1, 4, 2, 9, 5},
-                        {1, 4, 3, 8, 6, 5, 7, 2, 9},
-                        {9, 5, 8, 2, 4, 7, 3, 6, 1},
-                        {7, 6, 2, 3, 9, 1, 4, 5, 8},
-                        {3, 7, 1, 9, 5, 6, 8, 4, 2},
-                        {4, 9, 6, 1, 8, 2, 5, 7, 3},
-                        {2, 8, 5, 4, 7, 3, 9, 1, 6}};
+    if(argc != 2)
+    {
+        printf("Usage: %s <input_file>\n", argv[0]);
+        return 1;
+    }
 
+    int sudoku[9][9];
+    freopen(argv[1], "r", stdin);
+    for (int i = 0; i < SIZE; i++) 
+    {
+        for (int j = 0; j < SIZE; j++) 
+        {
+            scanf("%d", &sudoku[i][j]);
+        }
+    }
     //create parameters for each subgrid.
     parameters *param[9];
     int cnt = 0;
@@ -112,7 +114,6 @@ int main()
             return 1;
         }
     }
-
     //two threads for checking rows and columns.
     pthread_t thread_row, thread_col;
 
@@ -140,13 +141,12 @@ int main()
         }
         
         //check subgrid bitmask
-        if ((intptr_t)result_subgrid[i] == 0)
+        if ((int *)result_subgrid[i] == 0)
         {
             printf("Sudoku is invalid\n");
             return 1;
         }
     }
-
     if (pthread_join(thread_row, &result_row) != 0)
     {
         perror("Failed to join row thread");
@@ -160,7 +160,7 @@ int main()
     }
 
     //check row and column 
-    if ((intptr_t)result_row == 0 || (intptr_t)result_col == 0)
+    if ((int *)result_row == 0 || (int *)result_col == 0)
     {
         printf("Sudoku is invalid\n");
         return 1;
